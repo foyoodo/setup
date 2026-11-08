@@ -2,13 +2,24 @@
   "format": 1,
   "enrollment": [
     {
+      "path": "home/.config/karabiner/assets/complex_modifications",
+      "autosave": true,
+      "encrypt": false,
+      "variants": []
+    },
+    {
       "path": "home/.hammerspoon",
       "autosave": true,
       "encrypt": false,
       "variants": []
     }
   ],
-  "exclude": [],
+  "exclude": [
+    ".DS_Store"
+  ],
   "recipients": [],
-  "permissions": {}
+  "permissions": {
+    "home/.config/karabiner": 448,
+    "home/.config/karabiner/assets/complex_modifications": 448
+  }
 }
