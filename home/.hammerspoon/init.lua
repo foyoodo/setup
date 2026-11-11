@@ -1,4 +1,5 @@
 require "focus"
+require "window-switcher"
 require "remag"
 
 hs.loadSpoon("SpoonInstall")

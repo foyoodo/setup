@@ -32,5 +32,3 @@ hs.hotkey.bind({"alt"}, "X", launchOrFocusByBundleID("com.apple.dt.Xcode"))
 hs.hotkey.bind({"alt"}, "Z", launchOrFocusByBundleID("dev.zed.Zed"))
 hs.hotkey.bind({"alt"}, "C", launchOrFocusByBundleID("com.todesktop.230313mzl4w4u92")) -- Cursor
 hs.hotkey.bind({"alt"}, "V", launchOrFocusByBundleID("com.sublimemerge"))
-
-require "window-switcher"

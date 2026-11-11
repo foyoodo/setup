@@ -24,10 +24,10 @@ local function fitAspect(options)
         local unit
         if options.screenWidth then
             unit = math.floor((screen.w * options.screenWidth + w - 1) / w)
-            if unit * h > screen.h then unit = math.floor(screen.h / h) end
         else
             unit = math.floor((screen.h * options.screenHeight + h - 1) / h)
         end
+        unit = math.min(unit, math.floor(screen.w / w), math.floor(screen.h / h))
         local maxW, maxH = unit * w, unit * h
         if options.preserveWindowRatio then
             if frame.w <= 0 or frame.h <= 0 then return nil end
