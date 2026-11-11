@@ -8,7 +8,8 @@ local switcher = hs.window.switcher.new(filter, {
     textSize = 13,
     thumbnailSize = 170,
     showTitles = true,
-    showThumbnails = true,
+    -- Window snapshots are captured only for the mouse-hover preview.
+    showThumbnails = false,
     showSelectedThumbnail = false,
     showSelectedTitle = false,
 })
@@ -127,37 +128,27 @@ mouseWatcher = hs.eventtap.new({ hs.eventtap.event.types.leftMouseDown, hs.event
     return false
 end)
 
--- Use transparency-preserving snapshots before the built-in thumbnail is shown.
--- Keep the built-in switcher's one-minute snapshot cache behavior.
-local function prepareThumbnails()
-    for i = 1, #switcher.windows do
-        local thumb = switcher.drawings[i].thumb
-        if thumb and not rawget(thumb, '_transparentSnapshotWrapped') then
-            local setImage = thumb.setImage
-            thumb.setImage = function(self, fallback)
-                local window = switcher.windows and switcher.windows[i]
-                return setImage(self, getTransparentSnapshot(window) or fallback)
-            end
-            thumb._transparentSnapshotWrapped = true
-        end
-    end
-end
-
 local function move(direction)
     hidePreview()
     lastMouseX, lastMouseY = nil, nil
-    if not switcher.windows then
+    local fresh = not switcher.windows
+    if fresh then
         -- Remove snapshots for closed or expired windows to bound memory use.
         local now = hs.timer.secondsSinceEpoch()
         for id, cached in pairs(transparentSnapshots) do
             if now - cached.time >= snapshotTTL then transparentSnapshots[id] = nil end
         end
-        -- The built-in renderer mutates cached title frames; rebuild them on
-        -- each opening so a short title cannot shrink a later long title.
-        switcher.drawings.lastn = -1
+        -- The built-in renderer mutates title frames during drawing. Restore
+        -- their original bounds without rebuilding every item frame.
+        for _, item in ipairs(switcher.drawings) do
+            if item.baseTitleFrame then item.titleFrame = hs.geometry.copy(item.baseTitleFrame) end
+        end
     end
     if direction > 0 then switcher:next() else switcher:previous() end
-    if switcher.windows then
+    if switcher.windows and fresh then
+        if switcher.drawDelayed and switcher.drawDelayed:running() then
+            switcher.drawDelayed:setNextTrigger(0.05)
+        end
         -- Fit the panel to the item bounds with equal insets and matching corners.
         local drawings = switcher.drawings
         local first = drawings[1].highlightFrame
@@ -170,7 +161,10 @@ local function move(direction)
             h = first.h + inset * 2,
         }):setRoundedRectRadii(itemRadius + inset, itemRadius + inset)
         drawings.highlightRect:setRoundedRectRadii(itemRadius, itemRadius)
-        prepareThumbnails()
+        for i = 1, #switcher.windows do
+            local item = drawings[i]
+            if item.titleFrame then item.baseTitleFrame = hs.geometry.copy(item.titleFrame) end
+        end
         mouseWatcher:start()
         if not previewTimer then
             previewTimer = hs.timer.doEvery(0.05, function()
